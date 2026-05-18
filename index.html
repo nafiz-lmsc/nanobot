@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NanoBot — Tiny Robot. Massive Personality.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{heading:['"Space Grotesk"','sans-serif'],body:['"Inter"','sans-serif'],mono:['"JetBrains Mono"','monospace']}}}}
+</script>
+<style>
+:root{--bg:#050505;--bg2:#0a0a0a;--text:#F5F5F5;--text2:#888;--glass:rgba(255,255,255,0.06);--glass-b:rgba(255,255,255,0.1);--glass-h:rgba(255,255,255,0.1);--screen:#141414;--screen-g:rgba(255,122,26,0.04);--glow:rgba(255,122,26,0.15);--pc:255,255,255;--grid:rgba(255,255,255,0.03);--blush:rgba(255,100,100,0.35)}
+.light{--bg:#FAFAFA;--bg2:#f0f0f0;--text:#111;--text2:#666;--glass:rgba(0,0,0,0.03);--glass-b:rgba(0,0,0,0.08);--glass-h:rgba(0,0,0,0.06);--screen:#d8d8d8;--screen-g:rgba(255,122,26,0.03);--glow:rgba(255,122,26,0.1);--pc:0,0,0;--grid:rgba(0,0,0,0.04);--blush:rgba(255,100,100,0.25)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:rgba(255,122,26,0.3);border-radius:3px}
+html{scroll-behavior:smooth}
+
+#loading{position:fixed;inset:0;background:#FAFAFA;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s}
+#loading.done{opacity:0;visibility:hidden}
+.ld-eyes{display:flex;gap:32px;margin-bottom:48px;opacity:0;transition:opacity .6s}.ld-eyes.on{opacity:1}
+.ld-eye{width:14px;height:14px;background:#FF7A1A;border-radius:50%;box-shadow:0 0 20px #FF7A1A,0 0 60px rgba(255,122,26,0.3);animation:ldglow 2s ease-in-out infinite}
+@keyframes ldglow{0%,100%{box-shadow:0 0 20px #FF7A1A,0 0 60px rgba(255,122,26,0.3)}50%{box-shadow:0 0 28px #FF7A1A,0 0 80px rgba(255,122,26,0.5)}}
+.ld-smile{width:40px;height:18px;border:none;border-bottom:2.5px solid #FF7A1A;border-radius:0 0 20px 20px;opacity:0;transition:opacity .5s;margin-top:-32px}.ld-smile.on{opacity:1}
+.ld-term{font-family:'JetBrains Mono',monospace;font-size:11px;color:#FF7A1A;margin-top:44px;text-align:left;min-height:90px;opacity:0;transition:opacity .4s}.ld-term.on{opacity:1}
+.ld-line{opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s;margin-bottom:5px}.ld-line.on{opacity:1;transform:translateY(0)}
+.ld-cursor{display:inline-block;width:7px;height:13px;background:#FF7A1A;animation:curblink .7s infinite;vertical-align:middle;margin-left:2px}
+@keyframes curblink{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+#app{opacity:0;transition:opacity .8s ease .1s}#app.on{opacity:1}
+
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.008) 2px,rgba(0,0,0,0.008) 4px);pointer-events:none;z-index:9998}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:1}
+
+.glass{background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:background .2s}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 24px;transition:all .3s}
+nav.scrolled{background:var(--glass);border-bottom:1px solid var(--glass-b);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+/* Robot body language */
+.robot-wrap{transition:transform .7s cubic-bezier(.34,1.56,.64,1)}
+.robot-wrap.tilt-happy{transform:rotate(-3deg)}
+.robot-wrap.tilt-sleepy{transform:rotate(4deg) translateY(4px)}
+.robot-wrap.tilt-angry{transform:rotate(-2deg) scale(1.03)}
+.robot-wrap.tilt-confused{transform:rotate(3deg)}
+.robot-wrap.tilt-excited{transform:rotate(-2deg) scale(1.05)}
+.robot-wrap.tilt-thinking{transform:rotate(6deg)}
+.robot-wrap.tilt-sad{transform:rotate(-1deg) translateY(6px)}
+.robot-wrap.tilt-love{transform:rotate(-2deg) scale(1.04)}
+.robot-wrap.tilt-surprised{transform:scale(1.06)}
+.robot-wrap.tilt-neutral{transform:rotate(0) scale(1)}
+.robot-wrap.tilt-loading{transform:rotate(0) scale(.98)}
+
+.robot-float{animation:rfloat 4s ease-in-out infinite}
+@keyframes rfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* Eyes — smoother, longer transitions */
+.eye-g{transform-box:fill-box;transform-origin:center center;transition:transform .45s cubic-bezier(.4,0,.2,1), opacity .35s cubic-bezier(.4,0,.2,1)}
+.eye-g.blink{transform:scaleY(0.06)}
+.eye-g.sleepy{transform:scaleY(0.25)}
+.eye-g.excited{transform:scale(1.2)}
+.eye-g.sad{transform:scaleY(0.7) scaleX(1.1)}
+.eye-g.love-eyes{transform:scale(1.1)}
+.eye-g.dead{transform:scaleY(0.15) rotate(15deg)}
+.eye-g.surprised{transform:scale(1.3)}
+
+/* Pupils */
+.pupil{transition:r .35s cubic-bezier(.4,0,.2,1), fill .5s ease}
+.pupil.big{r:7}.pupil.small{r:3.5}
+.pupil.heart-pupil{opacity:0}
+
+/* Iris ring */
+.iris-ring{transition:opacity .35s cubic-bezier(.4,0,.2,1), r .35s cubic-bezier(.4,0,.2,1)}
+.iris-ring.hidden{opacity:0}
+
+/* Blush */
+.blush{transition:opacity .6s cubic-bezier(.4,0,.2,1)}
+.blush.on{opacity:1}.blush:not(.on){opacity:0}
+
+/* Mouths — smoother with spring-like easing */
+.mouth{transition:opacity .45s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.34,1.56,.64,1)}
+.mouth.on{opacity:1}.mouth:not(.on){opacity:0;pointer-events:none}
+
+/* Brows — same smooth treatment */
+.brow{transition:opacity .45s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.34,1.56,.64,1)}
+.brow.on{opacity:1}.brow:not(.on){opacity:0;pointer-events:none}
+
+/* Extras */
+.extra{transition:opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1)}
+.extra.on{opacity:1}.extra:not(.on){opacity:0;pointer-events:none}
+
+/* Antenna */
+.ant-glow{animation:apulse 2s ease-in-out infinite}
+@keyframes apulse{0%,100%{opacity:1;filter:drop-shadow(0 0 4px #FF7A1A)}50%{opacity:.5;filter:drop-shadow(0 0 10px #FF7A1A)}}
+
+/* Loading dots */
+.ldot{animation:lbounce 1.4s ease-in-out infinite}.ldot:nth-child(2){animation-delay:.2s}.ldot:nth-child(3){animation-delay:.4s}
+@keyframes lbounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* Sparkle */
+.sparkle{animation:spark 1.2s ease-in-out infinite;transform-origin:center}
+.sparkle:nth-child(2){animation-delay:.3s}
+.sparkle:nth-child(3){animation-delay:.6s}
+@keyframes spark{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
+
+/* Heart float */
+@keyframes heartFloat{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-30px) scale(.6);opacity:0}}
+
+/* Sweat */
+@keyframes sweatDrip{0%{transform:translateY(0);opacity:.8}100%{transform:translateY(14px);opacity:0}}
+
+/* Zzz */
+@keyframes zzzFloat{0%{transform:translate(0,0) scale(.6);opacity:0}30%{opacity:.8}100%{transform:translate(12px,-30px) scale(1.2);opacity:0}}
+
+/* Screen glow */
+.screen-glow{transition:opacity .7s cubic-bezier(.4,0,.2,1)}.screen-glow.on{opacity:1}.screen-glow:not(.on){opacity:0}
+
+/* Hero */
+.hero-glow{position:absolute;width:500px;height:500px;background:radial-gradient(circle,var(--glow) 0%,transparent 70%);border-radius:50%;pointer-events:none;filter:blur(40px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}.reveal.vis{opacity:1;transform:translateY(0)}
+.rd1{transition-delay:.1s}.rd2{transition-delay:.2s}.rd3{transition-delay:.3s}.rd4{transition-delay:.4s}
+
+.btn-p{background:#FF7A1A;color:#050505;padding:12px 28px;border-radius:12px;font-weight:600;font-family:'Space Grotesk',sans-serif;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;font-size:14px;text-decoration:none}
+.btn-p:hover{background:#FF8C33;transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,122,26,0.3)}
+.btn-s{background:var(--glass);color:var(--text);padding:12px 28px;border-radius:12px;font-weight:500;font-family:'Space Grotesk',sans-serif;border:1px solid var(--glass-b);cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;font-size:14px;backdrop-filter:blur(10px)}
+.btn-s:hover{background:var(--glass-h);transform:translateY(-1px)}
+
+.mtab{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;font-family:'Space Grotesk',sans-serif;cursor:pointer;transition:all .2s;color:var(--text2);background:transparent;border:none}
+.mtab:hover{color:var(--text)}.mtab.on{background:rgba(255,122,26,0.15);color:#FF7A1A}
+
+.emobtn{padding:8px 16px;border-radius:8px;font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .2s;color:var(--text2);background:var(--glass);border:1px solid var(--glass-b)}
+.emobtn:hover,.emobtn.on{color:#FF7A1A;border-color:rgba(255,122,26,0.3);background:rgba(255,122,26,0.1)}
+
+.rain-d{position:absolute;width:2px;height:14px;background:linear-gradient(to bottom,transparent,rgba(100,180,255,0.5));border-radius:2px;animation:rfall linear infinite;pointer-events:none}
+@keyframes rfall{0%{transform:translateY(-20px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(420px);opacity:0}}
+.snow-f{position:absolute;width:4px;height:4px;background:rgba(100,120,180,0.6);border-radius:50%;animation:sfall linear infinite;pointer-events:none}
+@keyframes sfall{0%{transform:translateY(-10px) translateX(0);opacity:0}10%{opacity:.7}100%{transform:translateY(420px) translateX(25px);opacity:0}}
+
+.term-dot{width:10px;height:10px;border-radius:50%}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(20px);padding:12px 24px;border-radius:12px;font-size:14px;color:var(--text);z-index:10001;transition:transform .4s cubic-bezier(.16,1,.3,1);font-family:'Space Grotesk',sans-serif;white-space:nowrap}
+.toast.vis{transform:translateX(-50%) translateY(0)}
+
+.mob-menu{position:fixed;inset:0;background:rgba(5,5,5,0.96);backdrop-filter:blur(20px);z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;visibility:hidden;transition:all .3s}
+.light .mob-menu{background:rgba(250,250,250,0.97)}
+.mob-menu.open{opacity:1;visibility:visible}
+.mob-menu a{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:500;color:var(--text);text-decoration:none;transition:color .2s}.mob-menu a:hover{color:#FF7A1A}
+
+.timer-num{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:500;letter-spacing:4px}
+.w-tint{position:absolute;inset:0;border-radius:24px;pointer-events:none;transition:background .6s;z-index:0}
+.code-p{position:fixed;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,122,26,0.06);pointer-events:none;z-index:0;animation:cpfloat 20s linear infinite}
+@keyframes cpfloat{0%{transform:translateY(100vh);opacity:0}5%{opacity:1}95%{opacity:1}100%{transform:translateY(-80px);opacity:0}}
+
+/* Chest LED animation */
+.chest-led{animation:ledPulse 3s ease-in-out infinite}
+@keyframes ledPulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* Ear wiggle for excited */
+.ear-l,.ear-r{transform-box:fill-box;transform-origin:right center;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.ear-r{transform-origin:left center}
+.robot-wrap.tilt-excited .ear-l{animation:earWiggleL .5s ease 2}
+.robot-wrap.tilt-excited .ear-r{animation:earWiggleR .5s ease 2}
+@keyframes earWiggleL{0%,100%{transform:rotate(0)}50%{transform:rotate(-12deg)}}
+@keyframes earWiggleR{0%,100%{transform:rotate(0)}50%{transform:rotate(12deg)}}
+
+/* Foot tap for thinking */
+.foot-l{transform-box:fill-box;transform-origin:center top;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+.robot-wrap.tilt-thinking .foot-l{animation:footTap 1s ease-in-out infinite}
+@keyframes footTap{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}
+
+section{position:relative;z-index:2}
+
+/* Vent lines */
+.vent-line{stroke:rgba(0,0,0,0.08);stroke-width:1.5;stroke-linecap:round}
+
+/* Screen inner reflection */
+.screen-reflect{opacity:.06;transition:opacity .3s}
+
+/* Body shadow under robot */
+.robot-shadow{transition:rx .8s cubic-bezier(.4,0,.2,1), ry .8s cubic-bezier(.4,0,.2,1)}
+
+@media(max-width:768px){
+.hero-grid{grid-template-columns:1fr!important;text-align:center}
+.hero-robot{order:-1}
+.hero-robot svg{width:200px!important;height:auto!important}
+.btn-group{justify-content:center!important}
+.feat-grid{grid-template-columns:1fr!important}
+.team-grid{grid-template-columns:1fr!important}
+.timer-num{font-size:36px!important}
+.hero-glow{width:300px!important;height:300px!important}
+#bot-robot{width:140px!important}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="ld-eyes" id="ld-eyes"><div class="ld-eye"></div><div class="ld-eye"></div></div>
+  <div class="ld-smile" id="ld-smile"></div>
+  <div class="ld-term" id="ld-term">
+    <div class="ld-line" id="ld-l1">> INITIALIZING NANOBOT...<span class="ld-cursor"></span></div>
+    <div class="ld-line" id="ld-l2">> Emotion Engine v2.1 Online</div>
+    <div class="ld-line" id="ld-l3">> Weather Module Ready</div>
+    <div class="ld-line" id="ld-l4">> Clock Synced — Personality Loaded</div>
+  </div>
+</div>
+
+<div class="grid-bg"></div>
+<canvas id="particles"></canvas>
+<div class="scanlines"></div>
+<div class="toast" id="toast"></div>
+
+<div class="mob-menu" id="mob-menu">
+  <a href="#hero" onclick="closeMob()">Home</a>
+  <a href="#features" onclick="closeMob()">Features</a>
+  <a href="#experience" onclick="closeMob()">Experience</a>
+  <a href="#team" onclick="closeMob()">Team</a>
+  <button onclick="toggleTheme();closeMob()" class="btn-s mt-4"><iconify-icon icon="lucide:moon" id="mob-theme-icon"></iconify-icon> Toggle Theme</button>
+</div>
+
+<div id="app">
+
+<nav id="nav">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <a href="#hero" class="flex items-center gap-2 no-underline">
+      <svg width="28" height="28" viewBox="0 0 200 280">
+        <defs><linearGradient id="nmg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF8C33"/><stop offset="100%" stop-color="#E06800"/></linearGradient></defs>
+        <rect x="50" y="40" width="100" height="76" rx="18" fill="url(#nmg)"/>
+        <rect x="59" y="48" width="82" height="56" rx="12" fill="#141414"/>
+        <circle cx="82" cy="72" r="8" fill="white"/><circle cx="82" cy="72" r="4" fill="#111"/>
+        <circle cx="118" cy="72" r="8" fill="white"/><circle cx="118" cy="72" r="4" fill="#111"/>
+        <path d="M92 88 Q100 95 108 88" stroke="white" fill="none" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="font-heading font-semibold text-lg" style="color:var(--text)">NanoBot</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8">
+      <a href="#hero" class="font-heading text-sm font-medium no-underline" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">Home</a>
+      <a href="#features" class="font-heading text-sm font-medium no-underline" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">Features</a>
+      <a href="#experience" class="font-heading text-sm font-medium no-underline" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">Experience</a>
+      <a href="#team" class="font-heading text-sm font-medium no-underline" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text2)'">Team</a>
+      <button onclick="toggleTheme()" class="p-2 rounded-lg cursor-pointer" style="background:var(--glass);border:1px solid var(--glass-b);color:var(--text);transition:all .2s">
+        <iconify-icon icon="lucide:sun" id="theme-icon" width="16"></iconify-icon>
+      </button>
+    </div>
+    <button class="md:hidden p-2 cursor-pointer" style="background:none;border:none;color:var(--text)" onclick="toggleMob()">
+      <iconify-icon icon="lucide:menu" width="22"></iconify-icon>
+    </button>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section id="hero" class="min-h-screen flex items-center relative overflow-hidden" style="padding-top:80px">
+  <div class="hero-glow" style="right:-100px;top:50%;transform:translateY(-50%)"></div>
+  <div class="max-w-6xl mx-auto px-6 w-full">
+    <div class="hero-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+      <div>
+        <h1 class="font-heading font-bold tracking-tight" style="font-size:clamp(40px,6vw,72px);line-height:1.05;animation:fadeUp .8s ease 5.5s both">NanoBot</h1>
+        <p class="font-heading font-light mt-4" style="font-size:clamp(18px,2.5vw,28px);color:var(--text2);line-height:1.3;animation:fadeUp .8s ease 5.7s both">Tiny Robot.<br>Massive Personality.</p>
+        <div class="btn-group flex flex-wrap gap-3 mt-8" style="animation:fadeUp .8s ease 5.9s both">
+          <a href="#experience" class="btn-p"><iconify-icon icon="lucide:play" width="16"></iconify-icon> Experience Live Bot</a>
+          <button class="btn-s" onclick="showToast('Hardware page coming soon 🤖')"><iconify-icon icon="lucide:box" width="16"></iconify-icon> Explore Hardware</button>
+          <button class="btn-s" onclick="showToast('Demo video coming soon 🎬')"><iconify-icon icon="lucide:play-circle" width="16"></iconify-icon> Watch Demo</button>
+        </div>
+        <div class="mt-10 flex items-center gap-4" style="animation:fadeUp .8s ease 6.1s both">
+          <div class="flex -space-x-2">
+            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold" style="border-color:var(--bg);background:#FF7A1A;color:#050505">N</div>
+            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold" style="border-color:var(--bg);background:#FF3B3B;color:white">J</div>
+            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold" style="border-color:var(--bg);background:#FF7A1A;color:#050505">T</div>
+          </div>
+          <p class="text-xs font-mono" style="color:var(--text2)">built with <span style="color:#FF3B3B">♥</span> by 3 humans</p>
+        </div>
+      </div>
+      <div class="hero-robot flex justify-center" style="animation:fadeUp .8s ease 5.6s both">
+        <div class="robot-float robot-wrap tilt-happy" id="hero-robot" style="width:300px;height:auto"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== EXPERIENCE ========== -->
+<section id="experience" class="py-32 px-6">
+  <div class="max-w-3xl mx-auto text-center">
+    <p class="reveal font-mono text-xs tracking-widest uppercase mb-4" style="color:#FF7A1A">// interactive demo</p>
+    <h2 class="reveal rd1 font-heading font-bold text-4xl md:text-5xl tracking-tight">Experience NanoBot</h2>
+    <p class="reveal rd2 mt-4 text-base" style="color:var(--text2)">Interact with your tiny companion right here, right now.</p>
+  </div>
+  <div class="max-w-2xl mx-auto mt-12 reveal rd3">
+    <div class="glass rounded-3xl p-6 md:p-8 relative overflow-hidden" id="bot-card">
+      <div class="w-tint" id="w-tint"></div>
+      <div id="weather-fx" class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none" style="z-index:1"></div>
+      <div class="relative" style="z-index:2">
+        <div class="flex justify-center gap-2 mb-6 flex-wrap">
+          <button class="mtab on" data-mode="clock" onclick="setMode('clock')"><iconify-icon icon="lucide:clock" width="14" style="vertical-align:-2px"></iconify-icon> Clock</button>
+          <button class="mtab" data-mode="weather" onclick="setMode('weather')"><iconify-icon icon="lucide:cloud" width="14" style="vertical-align:-2px"></iconify-icon> Weather</button>
+          <button class="mtab" data-mode="timer" onclick="setMode('timer')"><iconify-icon icon="lucide:timer" width="14" style="vertical-align:-2px"></iconify-icon> Timer</button>
+          <button class="mtab" data-mode="emotions" onclick="setMode('emotions')"><iconify-icon icon="lucide:smile" width="14" style="vertical-align:-2px"></iconify-icon> Emotions</button>
+        </div>
+        <div class="flex justify-center mb-4">
+          <div class="robot-wrap tilt-happy" id="bot-robot" style="width:180px;height:auto"></div>
+        </div>
+        <div id="mode-clock" class="text-center">
+          <div class="font-mono text-3xl md:text-4xl font-medium tracking-wider" id="clock-display">00:00:00</div>
+          <div class="font-body text-sm mt-2" style="color:var(--text2)" id="clock-date">Loading...</div>
+        </div>
+        <div id="mode-weather" class="text-center hidden">
+          <div class="flex justify-center gap-2 mb-4 flex-wrap">
+            <button class="emobtn on" data-weather="sunny" onclick="setWeather('sunny')">☀️ Sunny</button>
+            <button class="emobtn" data-weather="cloudy" onclick="setWeather('cloudy')">⛅ Cloudy</button>
+            <button class="emobtn" data-weather="rainy" onclick="setWeather('rainy')">🌧️ Rainy</button>
+            <button class="emobtn" data-weather="snowy" onclick="setWeather('snowy')">❄️ Snowy</button>
+          </div>
+          <p class="text-sm font-mono" style="color:var(--text2)" id="weather-label">Current: Sunny — Bot is happy!</p>
+        </div>
+        <div id="mode-timer" class="text-center hidden">
+          <div class="timer-num" id="timer-display" style="color:var(--text)">05:00</div>
+          <div class="flex justify-center gap-2 mt-4 items-center">
+            <button class="btn-s" style="padding:8px 14px" onclick="adjTimer(-1)"><iconify-icon icon="lucide:minus" width="16"></iconify-icon></button>
+            <span class="font-mono text-sm px-3" style="color:var(--text2)" id="timer-min-label">5 min</span>
+            <button class="btn-s" style="padding:8px 14px" onclick="adjTimer(1)"><iconify-icon icon="lucide:plus" width="16"></iconify-icon></button>
+          </div>
+          <div class="flex justify-center gap-3 mt-4">
+            <button class="btn-p" style="padding:10px 24px;font-size:13px" id="timer-start" onclick="toggleTimer()"><iconify-icon icon="lucide:play" width="14"></iconify-icon> Start</button>
+            <button class="btn-s" style="padding:10px 24px;font-size:13px" onclick="resetTimer()"><iconify-icon icon="lucide:rotate-ccw" width="14"></iconify-icon> Reset</button>
+          </div>
+        </div>
+        <div id="mode-emotions" class="text-center hidden">
+          <div class="flex justify-center gap-2 flex-wrap">
+            <button class="emobtn on" data-emo="happy" onclick="setEmo('happy')">happy</button>
+            <button class="emobtn" data-emo="sleepy" onclick="setEmo('sleepy')">sleepy</button>
+            <button class="emobtn" data-emo="angry" onclick="setEmo('angry')">angry</button>
+            <button class="emobtn" data-emo="sad" onclick="setEmo('sad')">sad</button>
+            <button class="emobtn" data-emo="confused" onclick="setEmo('confused')">confused</button>
+            <button class="emobtn" data-emo="excited" onclick="setEmo('excited')">excited</button>
+            <button class="emobtn" data-emo="love" onclick="setEmo('love')">love</button>
+            <button class="emobtn" data-emo="surprised" onclick="setEmo('surprised')">surprised</button>
+            <button class="emobtn" data-emo="thinking" onclick="setEmo('thinking')">thinking</button>
+            <button class="emobtn" data-emo="loading" onclick="setEmo('loading')">loading</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES ========== -->
+<section id="features" class="py-32 px-6">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="reveal font-mono text-xs tracking-widest uppercase mb-4" style="color:#FF7A1A">// what makes it special</p>
+      <h2 class="reveal rd1 font-heading font-bold text-4xl md:text-5xl tracking-tight">Engineered with Emotion</h2>
+    </div>
+    <div class="feat-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+      <div class="reveal rd1 glass rounded-2xl p-8 cursor-default" style="transition:all .3s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(255,122,26,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style="background:rgba(255,59,59,0.1)"><iconify-icon icon="lucide:heart" width="22" style="color:#FF3B3B"></iconify-icon></div>
+        <h3 class="font-heading font-semibold text-lg mb-2">Emotional AI</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text2)">10 distinct emotions with body language. NanoBot doesn't just display — it feels, tilts, blushes, and reacts to you.</p>
+      </div>
+      <div class="reveal rd2 glass rounded-2xl p-8 cursor-default" style="transition:all .3s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(255,122,26,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style="background:rgba(255,122,26,0.1)"><iconify-icon icon="lucide:layout-dashboard" width="22" style="color:#FF7A1A"></iconify-icon></div>
+        <h3 class="font-heading font-semibold text-lg mb-2">Smart Companion</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text2)">Real-time clock, animated weather faces, and a focus timer — all in a tiny desktop footprint.</p>
+      </div>
+      <div class="reveal rd3 glass rounded-2xl p-8 cursor-default" style="transition:all .3s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(255,122,26,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style="background:rgba(255,122,26,0.1)"><iconify-icon icon="lucide:box" width="22" style="color:#FF7A1A"></iconify-icon></div>
+        <h3 class="font-heading font-semibold text-lg mb-2">Minimal Hardware</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text2)">Tiny physical footprint. Premium materials. Designed to sit on your desk like a piece of art that happens to be alive.</p>
+      </div>
+      <div class="reveal rd4 glass rounded-2xl p-8 cursor-default" style="transition:all .3s" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(255,122,26,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style="background:rgba(255,122,26,0.1)"><iconify-icon icon="lucide:puzzle" width="22" style="color:#FF7A1A"></iconify-icon></div>
+        <h3 class="font-heading font-semibold text-lg mb-2">Open Personality System</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text2)">Download new faces, emotions, and behaviors. Your NanoBot evolves over time — always staying fresh.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TEAM ========== -->
+<section id="team" class="py-32 px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="reveal font-mono text-xs tracking-widest uppercase mb-4" style="color:#FF7A1A">// the humans behind the bot</p>
+      <h2 class="reveal rd1 font-heading font-bold text-4xl md:text-5xl tracking-tight">Built by</h2>
+    </div>
+    <div class="team-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div class="reveal rd1 glass rounded-2xl overflow-hidden" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+        <div class="flex gap-1.5 px-4 py-3" style="border-bottom:1px solid var(--glass-b)"><div class="term-dot" style="background:#FF3B3B"></div><div class="term-dot" style="background:#FF7A1A"></div><div class="term-dot" style="background:#4ade80"></div></div>
+        <div class="p-4"><p style="color:var(--text2)">> founder.load(0)</p><p class="mt-3 font-heading font-semibold text-base" style="font-family:'Space Grotesk',sans-serif">T. Ahmed Nafiz</p><p class="mt-1" style="color:var(--text2)">Co-Founder & Lead</p><p class="mt-3 flex items-center gap-1.5"><span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span> online</p></div>
+      </div>
+      <div class="reveal rd2 glass rounded-2xl overflow-hidden" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+        <div class="flex gap-1.5 px-4 py-3" style="border-bottom:1px solid var(--glass-b)"><div class="term-dot" style="background:#FF3B3B"></div><div class="term-dot" style="background:#FF7A1A"></div><div class="term-dot" style="background:#4ade80"></div></div>
+        <div class="p-4"><p style="color:var(--text2)">> founder.load(1)</p><p class="mt-3 font-heading font-semibold text-base" style="font-family:'Space Grotesk',sans-serif">Jihad Hasan</p><p class="mt-1" style="color:var(--text2)">Co-Founder & Dev</p><p class="mt-3 flex items-center gap-1.5"><span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span> online</p></div>
+      </div>
+      <div class="reveal rd3 glass rounded-2xl overflow-hidden" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+        <div class="flex gap-1.5 px-4 py-3" style="border-bottom:1px solid var(--glass-b)"><div class="term-dot" style="background:#FF3B3B"></div><div class="term-dot" style="background:#FF7A1A"></div><div class="term-dot" style="background:#4ade80"></div></div>
+        <div class="p-4"><p style="color:var(--text2)">> founder.load(2)</p><p class="mt-3 font-heading font-semibold text-base" style="font-family:'Space Grotesk',sans-serif">Tajwar Adib</p><p class="mt-1" style="color:var(--text2)">Co-Founder & Design</p><p class="mt-3 flex items-center gap-1.5"><span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span> online</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="py-12 px-6" style="border-top:1px solid var(--glass-b)">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <svg width="20" height="20" viewBox="0 0 200 280"><defs><linearGradient id="fmg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF8C33"/><stop offset="100%" stop-color="#E06800"/></linearGradient></defs><rect x="50" y="40" width="100" height="76" rx="18" fill="url(#fmg)"/><rect x="59" y="48" width="82" height="56" rx="12" fill="#141414"/><circle cx="82" cy="72" r="6" fill="white"/><circle cx="82" cy="72" r="3" fill="#111"/><circle cx="118" cy="72" r="6" fill="white"/><circle cx="118" cy="72" r="3" fill="#111"/><path d="M92 88 Q100 93 108 88" stroke="white" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="font-heading text-sm font-medium">NanoBot © 2026</span>
+    </div>
+    <p class="font-heading text-sm" style="color:var(--text2)">Tiny Robots. Real Emotions.</p>
+    <div class="flex gap-4">
+      <a href="#" class="p-2 rounded-lg" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='#FF7A1A'" onmouseout="this.style.color='var(--text2)'"><iconify-icon icon="lucide:twitter" width="18"></iconify-icon></a>
+      <a href="#" class="p-2 rounded-lg" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='#FF7A1A'" onmouseout="this.style.color='var(--text2)'"><iconify-icon icon="lucide:github" width="18"></iconify-icon></a>
+      <a href="#" class="p-2 rounded-lg" style="color:var(--text2);transition:color .2s" onmouseover="this.style.color='#FF7A1A'" onmouseout="this.style.color='var(--text2)'"><iconify-icon icon="lucide:instagram" width="18"></iconify-icon></a>
+    </div>
+  </div>
+</footer>
+</div>
+
+<script>
+// ============ ROBOT SVG GENERATOR ============
+function createRobotSVG(id) {
+  const uid = id.replace(/[^a-z]/g,'');
+  return `<svg viewBox="0 0 200 280" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bodyG_${uid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF8C33"/>
+      <stop offset="100%" stop-color="#E06800"/>
+    </linearGradient>
+    <linearGradient id="bodyG2_${uid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF8020"/>
+      <stop offset="100%" stop-color="#CC5E00"/>
+    </linearGradient>
+    <radialGradient id="screenGlow_${uid}" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,122,26,0.06)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="shadow_${uid}"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.15)"/></filter>
+    <clipPath id="screenClip_${uid}"><rect x="46" y="46" width="108" height="72" rx="14"/></clipPath>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse class="robot-shadow" cx="100" cy="272" rx="42" ry="5" fill="rgba(255,122,26,0.07)"/>
+
+  <!-- Feet -->
+  <rect class="foot-l" x="70" y="218" width="22" height="16" rx="8" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <rect x="108" y="218" width="22" height="16" rx="8" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <line x1="75" y1="226" x2="87" y2="226" stroke="rgba(0,0,0,0.1)" stroke-width="1" stroke-linecap="round"/>
+  <line x1="113" y1="226" x2="125" y2="226" stroke="rgba(0,0,0,0.1)" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Legs -->
+  <rect x="78" y="204" width="14" height="18" rx="7" fill="url(#bodyG2_${uid})"/>
+  <rect x="108" y="204" width="14" height="18" rx="7" fill="url(#bodyG2_${uid})"/>
+  <circle cx="85" cy="212" r="2" fill="rgba(0,0,0,0.08)"/>
+  <circle cx="115" cy="212" r="2" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Arms -->
+  <rect class="arm-l" x="24" y="148" width="16" height="40" rx="8" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <rect class="arm-r" x="160" y="148" width="16" height="40" rx="8" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <circle cx="32" cy="152" r="3" fill="rgba(0,0,0,0.06)"/>
+  <circle cx="168" cy="152" r="3" fill="rgba(0,0,0,0.06)"/>
+  <circle cx="32" cy="190" r="8" fill="url(#bodyG_${uid})"/>
+  <circle cx="168" cy="190" r="8" fill="url(#bodyG_${uid})"/>
+  <circle cx="32" cy="190" r="3.5" fill="rgba(0,0,0,0.06)"/>
+  <circle cx="168" cy="190" r="3.5" fill="rgba(0,0,0,0.06)"/>
+
+  <!-- Body -->
+  <rect x="48" y="140" width="104" height="68" rx="18" fill="url(#bodyG_${uid})" filter="url(#shadow_${uid})"/>
+  <rect x="52" y="143" width="96" height="20" rx="10" fill="rgba(255,255,255,0.08)"/>
+
+  <!-- Chest panel -->
+  <rect x="72" y="155" width="56" height="36" rx="10" fill="rgba(0,0,0,0.1)"/>
+  <rect x="76" y="159" width="48" height="28" rx="7" fill="rgba(0,0,0,0.06)"/>
+
+  <!-- Chest LED -->
+  <circle class="chest-led" cx="100" cy="173" r="4" fill="#FF3B3B" opacity=".5"/>
+  <circle cx="100" cy="173" r="2" fill="#FF6B6B"/>
+
+  <line class="vent-line" x1="82" y1="166" x2="94" y2="166"/>
+  <line class="vent-line" x1="106" y1="166" x2="118" y2="166"/>
+  <line class="vent-line" x1="82" y1="180" x2="94" y2="180"/>
+  <line class="vent-line" x1="106" y1="180" x2="118" y2="180"/>
+
+  <!-- Ears -->
+  <rect class="ear-l" x="30" y="68" width="14" height="30" rx="7" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <rect class="ear-r" x="156" y="68" width="14" height="30" rx="7" fill="url(#bodyG2_${uid})" filter="url(#shadow_${uid})"/>
+  <rect x="33" y="73" width="8" height="20" rx="4" fill="rgba(0,0,0,0.08)"/>
+  <rect x="159" y="73" width="8" height="20" rx="4" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Head -->
+  <rect x="38" y="34" width="124" height="96" rx="24" fill="url(#bodyG_${uid})" filter="url(#shadow_${uid})"/>
+  <rect x="44" y="38" width="112" height="24" rx="12" fill="rgba(255,255,255,0.1)"/>
+
+  <!-- Antenna -->
+  <line x1="100" y1="34" x2="100" y2="14" stroke="#FF7A1A" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="100" cy="10" r="5.5" fill="#FF7A1A" class="ant-glow"/>
+  <circle cx="100" cy="10" r="2.5" fill="#FFB366"/>
+  <circle cx="100" cy="10" r="8" fill="none" stroke="rgba(255,122,26,0.2)" stroke-width="1"/>
+
+  <!-- Screen -->
+  <rect x="46" y="46" width="108" height="72" rx="14" fill="var(--screen)"/>
+  <rect class="screen-glow on" x="46" y="46" width="108" height="72" rx="14" fill="url(#screenGlow_${uid})"/>
+  <rect class="screen-reflect" x="46" y="46" width="108" height="36" rx="14" fill="white" clip-path="url(#screenClip_${uid})"/>
+  <rect x="46" y="46" width="108" height="72" rx="14" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <circle cx="54" cy="54" r="1.5" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="146" cy="54" r="1.5" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="54" cy="110" r="1.5" fill="rgba(255,255,255,0.06)"/>
+  <circle cx="146" cy="110" r="1.5" fill="rgba(255,255,255,0.06)"/>
+
+  <!-- ====== EYES ====== -->
+  <g class="eye-g eye-l" data-eye="l">
+    <circle cx="80" cy="76" r="15" fill="white"/>
+    <circle class="iris-ring" cx="80" cy="76" r="11" fill="none" stroke="rgba(100,140,200,0.15)" stroke-width="1"/>
+    <circle class="pupil" data-pupil="l" cx="80" cy="76" r="6" fill="#111"/>
+    <circle cx="83" cy="72" r="2.5" fill="white" opacity=".8"/>
+    <circle cx="77" cy="79" r="1.2" fill="white" opacity=".4"/>
+  </g>
+  <g class="eye-g eye-r" data-eye="r">
+    <circle cx="120" cy="76" r="15" fill="white"/>
+    <circle class="iris-ring" cx="120" cy="76" r="11" fill="none" stroke="rgba(100,140,200,0.15)" stroke-width="1"/>
+    <circle class="pupil" data-pupil="r" cx="120" cy="76" r="6" fill="#111"/>
+    <circle cx="123" cy="72" r="2.5" fill="white" opacity=".8"/>
+    <circle cx="117" cy="79" r="1.2" fill="white" opacity=".4"/>
+  </g>
+
+  <!-- Heart eyes -->
+  <g class="extra heart-eyes" data-extra="heart-eyes">
+    <path d="M80 76 C80 70, 72 68, 72 74 C72 80, 80 86, 80 86 C80 86, 88 80, 88 74 C88 68, 80 70, 80 76Z" fill="#FF3B3B" transform="scale(0.5) translate(80,76)"/>
+    <path d="M120 76 C120 70, 112 68, 112 74 C112 80, 120 86, 120 86 C120 86, 128 80, 128 74 C128 68, 120 70, 120 76Z" fill="#FF3B3B" transform="scale(0.5) translate(120,76)"/>
+  </g>
+
+  <!-- X eyes -->
+  <g class="extra x-eyes" data-extra="x-eyes">
+    <g transform="translate(80,76)"><line x1="-5" y1="-5" x2="5" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="-5" x2="-5" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></g>
+    <g transform="translate(120,76)"><line x1="-5" y1="-5" x2="5" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="-5" x2="-5" y2="5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></g>
+  </g>
+
+  <!-- ====== BLUSH ====== -->
+  <ellipse class="blush" data-blush="l" cx="62" cy="88" rx="10" ry="6" fill="var(--blush)"/>
+  <ellipse class="blush" data-blush="r" cx="138" cy="88" rx="10" ry="6" fill="var(--blush)"/>
+
+  <!-- ====== BROWS ====== -->
+  <line class="brow brow-al" data-brow="al" x1="60" y1="52" x2="92" y2="58" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+  <line class="brow brow-ar" data-brow="ar" x1="108" y1="58" x2="140" y2="52" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+  <line class="brow brow-cl" data-brow="cl" x1="60" y1="58" x2="92" y2="52" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+  <path class="brow brow-sl" data-brow="sl" d="M62 54 Q76 50 90 54" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="brow brow-sr" data-brow="sr" d="M110 54 Q124 50 138 54" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="brow brow-sul" data-brow="sul" d="M64 46 Q76 40 92 46" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="brow brow-sur" data-brow="sur" d="M108 46 Q124 40 136 46" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- ====== MOUTHS ====== -->
+  <path class="mouth m-happy on" data-mouth="happy" d="M84 100 Q100 118 116 100" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="mouth m-sleepy" data-mouth="sleepy" d="M88 102 Q100 105 112 102" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="mouth m-angry" data-mouth="angry" d="M84 108 Q100 92 116 108" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="mouth m-sad" data-mouth="sad" d="M88 106 Q100 100 112 106" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="mouth m-confused" data-mouth="confused" d="M84 101 Q92 106 100 101 Q108 106 116 101" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <path class="mouth m-excited" data-mouth="excited" d="M78 98 Q100 124 122 98" stroke="white" fill="rgba(255,255,255,0.1)" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse class="mouth m-love" data-mouth="love" cx="100" cy="103" rx="5" ry="6" fill="none" stroke="white" stroke-width="2.5"/>
+  <ellipse class="mouth m-surprised" data-mouth="surprised" cx="100" cy="103" rx="8" ry="10" fill="none" stroke="white" stroke-width="2.5"/>
+  <path class="mouth m-thinking" data-mouth="thinking" d="M86 102 Q94 97 102 102" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+  <g class="mouth m-loading" data-mouth="loading">
+    <circle class="ldot" cx="88" cy="102" r="2.5" fill="white"/>
+    <circle class="ldot" cx="100" cy="102" r="2.5" fill="white"/>
+    <circle class="ldot" cx="112" cy="102" r="2.5" fill="white"/>
+  </g>
+  <line class="mouth m-neutral" data-mouth="neutral" x1="88" y1="102" x2="112" y2="102" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- ====== EXTRAS ====== -->
+  <g class="extra sparkles" data-extra="sparkles">
+    <g class="sparkle" transform="translate(52,50)"><path d="M0-4 L1-1 4 0 1 1 0 4 -1 1 -4 0 -1-1Z" fill="#FFD700"/></g>
+    <g class="sparkle" transform="translate(150,52)"><path d="M0-3 L.8-.8 3 0 .8.8 0 3 -.8.8 -3 0 -.8-.8Z" fill="#FFD700"/></g>
+    <g class="sparkle" transform="translate(100,38)"><path d="M0-3.5 L.9-.9 3.5 0 .9.9 0 3.5 -.9.9 -3.5 0 -.9-.9Z" fill="#FFD700"/></g>
+  </g>
+  <g class="extra sweat" data-extra="sweat">
+    <path d="M148 56 Q152 56 152 62 Q152 68 148 68 Q144 68 144 62 Q144 56 148 56Z" fill="rgba(100,180,255,0.6)" style="animation:sweatDrip 1.5s ease-in-out infinite"/>
+  </g>
+  <g class="extra zzz" data-extra="zzz">
+    <text x="148" y="42" font-family="Space Grotesk,sans-serif" font-size="11" font-weight="600" fill="rgba(255,122,26,0.5)" style="animation:zzzFloat 2s ease-out infinite">Z</text>
+    <text x="158" y="30" font-family="Space Grotesk,sans-serif" font-size="9" font-weight="600" fill="rgba(255,122,26,0.35)" style="animation:zzzFloat 2s ease-out infinite .6s">z</text>
+    <text x="164" y="22" font-family="Space Grotesk,sans-serif" font-size="7" font-weight="600" fill="rgba(255,122,26,0.2)" style="animation:zzzFloat 2s ease-out infinite 1.2s">z</text>
+  </g>
+  <g class="extra hearts" data-extra="hearts">
+    <path d="M148 60 C148 57, 144 56, 144 59 C144 62, 148 65, 148 65 C148 65, 152 62, 152 59 C152 56, 148 57, 148 60Z" fill="#FF3B3B" style="animation:heartFloat 2s ease-out infinite"/>
+    <path d="M155 50 C155 48, 152 47, 152 49 C152 51, 155 53, 155 53 C155 53, 158 51, 158 49 C158 47, 155 48, 155 50Z" fill="#FF3B3B" style="animation:heartFloat 2s ease-out infinite .7s"/>
+  </g>
+  <g class="extra anger-vein" data-extra="anger-vein">
+    <path d="M142 44 L146 40 L144 44 L148 40" stroke="rgba(255,59,59,0.6)" fill="none" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g class="extra tear" data-extra="tear">
+    <path d="M68 92 Q70 92 70 96 Q70 100 68 100 Q66 100 66 96 Q66 92 68 92Z" fill="rgba(100,180,255,0.5)" style="animation:sweatDrip 2s ease-in-out infinite"/>
+  </g>
+</svg>`;
+}
+
+// Inject robots
+document.getElementById('hero-robot').innerHTML = createRobotSVG('hero');
+document.getElementById('bot-robot').innerHTML = createRobotSVG('bot');
+
+// ============ LOADING ============
+const ldEyes=document.getElementById('ld-eyes'),
+      ldSmile=document.getElementById('ld-smile'),
+      ldTerm=document.getElementById('ld-term'),
+      ldLines=['ld-l1','ld-l2','ld-l3','ld-l4'].map(i=>document.getElementById(i)),
+      loading=document.getElementById('loading'),
+      app=document.getElementById('app');
+
+setTimeout(()=>ldEyes.classList.add('on'),400);
+setTimeout(()=>ldTerm.classList.add('on'),1200);
+setTimeout(()=>ldLines[0].classList.add('on'),1500);
+setTimeout(()=>ldLines[1].classList.add('on'),2200);
+setTimeout(()=>ldLines[2].classList.add('on'),2900);
+setTimeout(()=>ldLines[3].classList.add('on'),3600);
+setTimeout(()=>ldSmile.classList.add('on'),4200);
+setTimeout(()=>{loading.classList.add('done');app.classList.add('on')},5200);
+
+// ============ TOAST ============
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('vis');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('vis'),2500)}
+
+// ============ THEME ============
+let isDark=false;
+function toggleTheme(){isDark=!isDark;document.documentElement.classList.toggle('light',!isDark);document.getElementById('theme-icon').setAttribute('icon',isDark?'lucide:moon':'lucide:sun');const mi=document.getElementById('mob-theme-icon');if(mi)mi.setAttribute('icon',isDark?'lucide:sun':'lucide:moon')}
+
+// ============ MOBILE NAV ============
+function toggleMob(){document.getElementById('mob-menu').classList.toggle('open')}
+function closeMob(){document.getElementById('mob-menu').classList.remove('open')}
+
+// ============ NAV SCROLL ============
+window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>40)});
+
+// ============ PARTICLES ============
+const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
+let W,H,mx=0,my=0;
+function resizeCanvas(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+const pts=[];
+for(let i=0;i<60;i++){pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.5+.5,o:Math.random()*.35+.1,isOrange:Math.random()>.75})}
+function drawParticles(){ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;const dx=mx-p.x,dy=my-p.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){p.x-=dx*.002;p.y-=dy*.002}const col=p.isOrange?'255,122,26':(isDark?'255,255,255':'140,140,140');ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${col},${p.o})`;ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y);if(d<110){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=`rgba(${col},${(1-d/110)*.07})`;ctx.stroke()}}}requestAnimationFrame(drawParticles)}
+drawParticles();
+
+// ============ CODE PARTICLES ============
+const codeTexts=['emotion_engine.ts','weather_module.ts','nanobot.ai','personality.sys','clock_sync.ts','mood_parser.ts','face_renderer.ts','body_language.ts'];
+for(let i=0;i<8;i++){const el=document.createElement('div');el.className='code-p';el.textContent=codeTexts[i%codeTexts.length];el.style.left=Math.random()*100+'%';el.style.animationDelay=Math.random()*20+'s';el.style.animationDuration=(15+Math.random()*10)+'s';document.body.appendChild(el)}
+
+// ============ SMOOTH PUPIL TRACKING (lerp-based) ============
+const pupilState={hero:{ox:0,oy:0,tx:0,ty:0},bot:{ox:0,oy:0,tx:0,ty:0}};
+
+document.addEventListener('mousemove',e=>{
+  ['hero','bot'].forEach(id=>{
+    const bot=document.getElementById(id+'-robot');
+    if(!bot)return;
+    const rect=bot.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height*.25;
+    const dx=e.clientX-cx,dy=e.clientY-cy;
+    const angle=Math.atan2(dy,dx);
+    const dist=Math.min(Math.hypot(dx,dy)/12,4.5);
+    pupilState[id].tx=Math.cos(angle)*dist;
+    pupilState[id].ty=Math.sin(angle)*dist;
+  });
+});
+
+function updatePupils(){
+  ['hero','bot'].forEach(id=>{
+    const s=pupilState[id];
+    // Smooth lerp towards target
+    s.ox+=(s.tx-s.ox)*0.1;
+    s.oy+=(s.ty-s.oy)*0.1;
+    // Snap if very close
+    if(Math.abs(s.tx-s.ox)<0.05)s.ox=s.tx;
+    if(Math.abs(s.ty-s.oy)<0.05)s.oy=s.ty;
+
+    const bot=document.getElementById(id+'-robot');
+    if(!bot)return;
+    bot.querySelectorAll('.pupil').forEach(p=>{
+      if(p.classList.contains('heart-pupil'))return;
+      const base=p.dataset.pupil==='l'?80:120;
+      p.setAttribute('cx',base+s.ox);
+      p.setAttribute('cy',76+s.oy);
+    });
+  });
+  requestAnimationFrame(updatePupils);
+}
+updatePupils();
+
+// ============ BLINKING (smoother, slightly longer) ============
+function startBlinks(bot){
+  function blink(){
+    const eyes=bot.querySelectorAll('.eye-g');
+    const extras=bot.querySelectorAll('.extra.on');
+    const hasSpecialEyes=[...extras].some(e=>e.dataset.extra==='heart-eyes'||e.dataset.extra==='x-eyes');
+    if(!eyes[0].classList.contains('sleepy')&&!hasSpecialEyes){
+      eyes.forEach(e=>e.classList.add('blink'));
+      setTimeout(()=>eyes.forEach(e=>e.classList.remove('blink')),180);
+    }
+  }
+  return setInterval(()=>{if(Math.random()>.2)blink()},3000+Math.random()*2500);
+}
+const blink1=startBlinks(document.getElementById('hero-robot'));
+const blink2=startBlinks(document.getElementById('bot-robot'));
+
+// ============ EMOTION ENGINE (with staggered application) ============
+const emoTimers=new Map();
+
+function setRobotEmotion(bot,emo){
+  // Clear any pending stagger timers for this bot
+  const prev=emoTimers.get(bot);
+  if(prev)prev.forEach(t=>clearTimeout(t));
+  const timers=[];
+  emoTimers.set(bot,timers);
+
+  const later=(ms,fn)=>{if(ms<=0){fn();return}timers.push(setTimeout(fn,ms))};
+
+  // === RESET ALL IMMEDIATELY ===
+  bot.querySelectorAll('.eye-g').forEach(e=>{
+    e.classList.remove('blink','sleepy','excited','sad','love-eyes','dead','surprised');
+    e.style.opacity='1';
+  });
+  bot.querySelectorAll('.mouth').forEach(m=>m.classList.remove('on'));
+  bot.querySelectorAll('.brow').forEach(b=>b.classList.remove('on'));
+  bot.querySelectorAll('.blush').forEach(b=>b.classList.remove('on'));
+  bot.querySelectorAll('.extra').forEach(x=>x.classList.remove('on'));
+  bot.querySelectorAll('.pupil').forEach(p=>{
+    p.classList.remove('big','small','heart-pupil');
+    p.setAttribute('r','6');
+    p.setAttribute('fill','#111');
+  });
+  bot.querySelectorAll('.iris-ring').forEach(r=>r.classList.remove('hidden'));
+  bot.classList.remove('tilt-happy','tilt-sleepy','tilt-angry','tilt-confused','tilt-excited','tilt-thinking','tilt-sad','tilt-love','tilt-surprised','tilt-neutral','tilt-loading');
+
+  const cfg={
+    happy:    {mouth:'happy',   tilt:'tilt-happy',   blush:true,  pupil:'normal'},
+    sleepy:   {mouth:'sleepy',  tilt:'tilt-sleepy',  eyes:'sleepy',extras:['zzz'],       pupil:'small'},
+    angry:    {mouth:'angry',   tilt:'tilt-angry',   brows:['brow-al','brow-ar'],extras:['anger-vein'],pupil:'small',screenGlow:false},
+    sad:      {mouth:'sad',     tilt:'tilt-sad',     eyes:'sad',  brows:['brow-sl','brow-sr'],extras:['tear'],pupil:'big'},
+    confused: {mouth:'confused',tilt:'tilt-confused', brows:['brow-cl'],extras:['sweat'],pupil:'normal'},
+    excited:  {mouth:'excited', tilt:'tilt-excited',  eyes:'excited',blush:true,extras:['sparkles'],pupil:'big'},
+    love:     {mouth:'love',    tilt:'tilt-love',    blush:true,  extras:['hearts'],specialEyes:'heart-eyes'},
+    surprised:{mouth:'surprised',tilt:'tilt-surprised',eyes:'surprised',brows:['brow-sul','brow-sur'],pupil:'small'},
+    thinking: {mouth:'thinking',tilt:'tilt-thinking', brows:['brow-cl'],pupil:'normal'},
+    loading:  {mouth:'loading', tilt:'tilt-loading',  pupil:'normal'},
+    neutral:  {mouth:'neutral', tilt:'tilt-neutral',  pupil:'normal'},
+    dead:     {mouth:'neutral', tilt:'tilt-sad',     specialEyes:'x-eyes',pupil:'normal'}
+  };
+
+  const c=cfg[emo]||cfg.happy;
+
+  // --- 0ms: Eyes, tilt, pupil, special eyes, screen glow, shadow ---
+  if(c.eyes==='sleepy')bot.querySelectorAll('.eye-g').forEach(e=>e.classList.add('sleepy'));
+  if(c.eyes==='excited')bot.querySelectorAll('.eye-g').forEach(e=>e.classList.add('excited'));
+  if(c.eyes==='sad')bot.querySelectorAll('.eye-g').forEach(e=>e.classList.add('sad'));
+  if(c.eyes==='surprised')bot.querySelectorAll('.eye-g').forEach(e=>e.classList.add('surprised'));
+
+  if(c.specialEyes){
+    bot.querySelectorAll('.eye-g').forEach(e=>{e.style.opacity='0'});
+    bot.querySelector(`[data-extra="${c.specialEyes}"]`)?.classList.add('on');
+  }else{
+    bot.querySelectorAll('.eye-g').forEach(e=>{e.style.opacity='1'});
+  }
+
+  if(c.tilt)bot.classList.add(c.tilt);
+
+  if(c.pupil==='big')bot.querySelectorAll('.pupil').forEach(p=>{if(!p.classList.contains('heart-pupil'))p.setAttribute('r','7.5')});
+  if(c.pupil==='small')bot.querySelectorAll('.pupil').forEach(p=>{if(!p.classList.contains('heart-pupil'))p.setAttribute('r','4')});
+
+  const sg=bot.querySelector('.screen-glow');
+  if(sg)sg.classList.toggle('on',c.screenGlow!==false);
+
+  const sh=bot.querySelector('.robot-shadow');
+  if(sh){
+    if(emo==='sleepy'||emo==='sad')sh.setAttribute('rx','48');
+    else if(emo==='excited'||emo==='surprised')sh.setAttribute('rx','36');
+    else sh.setAttribute('rx','42');
+  }
+
+  // --- 60ms: Mouth ---
+  later(60,()=>{
+    const mEl=bot.querySelector(`[data-mouth="${c.mouth}"]`);
+    if(mEl)mEl.classList.add('on');
+  });
+
+  // --- 120ms: Brows ---
+  later(120,()=>{
+    if(c.brows)c.brows.forEach(b=>bot.querySelector(`[data-brow="${b}"]`)?.classList.add('on'));
+  });
+
+  // --- 180ms: Blush ---
+  later(180,()=>{
+    if(c.blush)bot.querySelectorAll('.blush').forEach(b=>b.classList.add('on'));
+  });
+
+  // --- 240ms: Extras ---
+  later(240,()=>{
+    if(c.extras)c.extras.forEach(x=>bot.querySelector(`[data-extra="${x}"]`)?.classList.add('on'));
+  });
+}
+
+// ============ HERO ROBOT MOOD ============
+const heroBot=document.getElementById('hero-robot');
+function updateHeroMood(){
+  const h=new Date().getHours();
+  if(h<6)setRobotEmotion(heroBot,'sleepy');
+  else if(h<9)setRobotEmotion(heroBot,'happy');
+  else if(h<17)setRobotEmotion(heroBot,'happy');
+  else if(h<21)setRobotEmotion(heroBot,'neutral');
+  else setRobotEmotion(heroBot,'sleepy');
+}
+updateHeroMood();setInterval(updateHeroMood,60000);
+heroBot.addEventListener('mouseenter',()=>setRobotEmotion(heroBot,'excited'));
+heroBot.addEventListener('mouseleave',()=>updateHeroMood());
+heroBot.addEventListener('click',()=>{setRobotEmotion(heroBot,'love');setTimeout(updateHeroMood,2000)});
+
+// ============ BOT MODES ============
+let currentMode='clock';
+function setMode(mode){
+  currentMode=mode;
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.toggle('on',t.dataset.mode===mode));
+  ['clock','weather','timer','emotions'].forEach(m=>{document.getElementById('mode-'+m).classList.toggle('hidden',m!==mode)});
+  clearWeatherFx();document.getElementById('w-tint').style.background='transparent';
+  const bot=document.getElementById('bot-robot');
+  if(mode==='clock'){setRobotEmotion(bot,'happy');updateClock()}
+  else if(mode==='weather')setWeather('sunny');
+  else if(mode==='timer'){setRobotEmotion(bot,'happy');resetTimer()}
+  else if(mode==='emotions')setEmo('happy');
+}
+
+// Clock
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock-display').textContent=now.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('clock-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// Weather
+function setWeather(w){
+  document.querySelectorAll('[data-weather]').forEach(b=>b.classList.toggle('on',b.dataset.weather===w));
+  const bot=document.getElementById('bot-robot'),tint=document.getElementById('w-tint'),label=document.getElementById('weather-label');
+  clearWeatherFx();
+  const map={
+    sunny:{emo:'happy',tint:'rgba(255,200,50,0.06)',label:'Current: Sunny — Bot is happy!',fx:null},
+    cloudy:{emo:'thinking',tint:'rgba(150,150,150,0.06)',label:'Current: Cloudy — Bot is contemplative.',fx:null},
+    rainy:{emo:'sad',tint:'rgba(80,130,200,0.08)',label:'Current: Rainy — Bot feels blue.',fx:'rain'},
+    snowy:{emo:'excited',tint:'rgba(200,220,255,0.06)',label:'Current: Snowy — Bot is thrilled!',fx:'snow'}
+  };
+  const c=map[w]||map.sunny;
+  setRobotEmotion(bot,c.emo);tint.style.background=c.tint;label.textContent=c.label;
+  if(c.fx)createWeatherFx(c.fx);
+}
+function clearWeatherFx(){document.getElementById('weather-fx').innerHTML=''}
+function createWeatherFx(type){
+  const c=document.getElementById('weather-fx');
+  if(type==='rain'){for(let i=0;i<30;i++){const d=document.createElement('div');d.className='rain-d';d.style.left=Math.random()*100+'%';d.style.animationDuration=(.6+Math.random()*.6)+'s';d.style.animationDelay=Math.random()*2+'s';c.appendChild(d)}}
+  else if(type==='snow'){for(let i=0;i<25;i++){const s=document.createElement('div');s.className='snow-f';s.style.left=Math.random()*100+'%';s.style.animationDuration=(3+Math.random()*4)+'s';s.style.animationDelay=Math.random()*5+'s';s.style.width=s.style.height=(2+Math.random()*3)+'px';c.appendChild(s)}}
+}
+
+// Timer
+let timerMinutes=5,timerSeconds=300,timerRunning=false,timerInterval=null;
+function adjTimer(d){if(timerRunning)return;timerMinutes=Math.max(1,Math.min(60,timerMinutes+d));timerSeconds=timerMinutes*60;updateTimerDisplay()}
+function updateTimerDisplay(){
+  if(timerSeconds<=0){document.getElementById('timer-display').textContent='Done!';return}
+  const m=Math.floor(timerSeconds/60),s=timerSeconds%60;
+  document.getElementById('timer-display').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('timer-min-label').textContent=timerMinutes+' min';
+}
+function toggleTimer(){
+  const bot=document.getElementById('bot-robot');
+  if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-start').innerHTML='<iconify-icon icon="lucide:play" width="14"></iconify-icon> Start';setRobotEmotion(bot,'happy');return}
+  timerRunning=true;document.getElementById('timer-start').innerHTML='<iconify-icon icon="lucide:pause" width="14"></iconify-icon> Pause';
+  setRobotEmotion(bot,'neutral');
+  timerInterval=setInterval(()=>{
+    timerSeconds--;
+    if(timerSeconds<=10&&timerSeconds>0)setRobotEmotion(bot,'excited');
+    updateTimerDisplay();
+    if(timerSeconds<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-start').innerHTML='<iconify-icon icon="lucide:play" width="14"></iconify-icon> Start';setRobotEmotion(bot,'sleepy');document.getElementById('timer-display').textContent='Done!';showToast('⏰ Time\'s up! NanoBot needs a nap.')}
+  },1000);
+}
+function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerSeconds=timerMinutes*60;document.getElementById('timer-start').innerHTML='<iconify-icon icon="lucide:play" width="14"></iconify-icon> Start';setRobotEmotion(document.getElementById('bot-robot'),'happy');updateTimerDisplay()}
+updateTimerDisplay();
+
+// Emotions
+function setEmo(emo){
+  document.querySelectorAll('[data-emo]').forEach(b=>b.classList.toggle('on',b.dataset.emo===emo));
+  setRobotEmotion(document.getElementById('bot-robot'),emo);
+}
+
+// ============ SCROLL REVEAL ============
+const observer=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')})},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// ============ SMOOTH SCROLL ============
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'})})});
+</script>
+</body>
+</html>
